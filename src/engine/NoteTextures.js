@@ -13,10 +13,10 @@ const NOTE_COLORS = {
 
 /**
  * ベース形＝下カット（上辺マーカー・Vが内側）。
- * 0=Up→180°, 1=Down→0°, 2=Left→-90°, 3=Right→90°,
+ * 0=Up→180°, 1=Down→0°, 2=Left→90°, 3=Right→-90°,
  * 4=UpLeft→135°, 5=UpRight→-135°, 6=DownLeft→45°, 7=DownRight→-45°
  */
-export const NOTE_ROTATION = [180, 0, -90, 90, 135, -135, 45, -45];
+export const NOTE_ROTATION = [180, 0, 90, -90, 135, -135, 45, -45];
 
 /** カットエフェクト — マーカー方向（＝切る方向）に斬撃ラインを合わせる */
 export function getCutSlashAngle(cutDirection) {
