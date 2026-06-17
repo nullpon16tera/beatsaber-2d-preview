@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BeatSaver 2D Map Previewer</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Noto+Sans+JP:wght@400;700;900&display=swap" rel="stylesheet">
+</head>
+<body class="w-screen h-screen flex flex-col items-center justify-start text-slate-100 p-3 md:p-4 overflow-hidden">
+
+    <div class="w-full max-w-7xl h-full flex flex-col gap-3 min-h-0">
+
+        <header class="flex flex-col md:flex-row justify-between items-center gap-2 py-2 px-5 cyber-panel rounded-xl border-cyan-500/30 flex-shrink-0">
+            <div class="flex items-center gap-3">
+                <div class="w-2.5 h-2.5 rounded-full bg-red-500 animate-ping"></div>
+                <h1 class="text-xl font-black tracking-widest bg-gradient-to-r from-red-500 via-purple-500 to-cyan-400 bg-clip-text text-transparent">
+                    BEATSAVER 2D PREVIEWER
+                </h1>
+                <span class="text-[9px] bg-cyan-500/10 text-cyan-400 border border-cyan-500/30 px-2 py-0.5 rounded-full font-mono">OPTIMIZED</span>
+            </div>
+
+            <div class="flex items-center gap-2 w-full md:w-auto max-w-md">
+                <input type="text" id="mapInput" placeholder="URL、ID、または !bsr コマンドを入力"
+                       class="flex-1 bg-black/60 border border-cyan-500/30 rounded-lg px-3 py-1 text-xs text-cyan-300 focus:outline-none focus:ring-1 focus:ring-cyan-400 focus:border-transparent placeholder:text-gray-600 transition font-mono">
+                <button onclick="loadFromInput()" class="bg-gradient-to-r from-cyan-600 to-blue-500 hover:from-cyan-500 hover:to-blue-400 text-white text-[11px] font-bold px-3.5 py-1.5 rounded-lg tracking-wider transition active:scale-95 whitespace-nowrap">
+                    GET MAP 🌐
+                </button>
+            </div>
+        </header>
+
+        <div class="flex-1 min-h-0 grid grid-cols-1 lg:grid-cols-12 gap-3">
+
+            <div class="lg:col-span-4 h-full flex flex-col gap-3 min-h-0 overflow-y-auto custom-scrollbar pr-1">
+
+                <div class="cyber-panel rounded-xl p-4 relative overflow-hidden flex flex-col items-center text-center flex-shrink-0">
+
+                    <div id="dropZone" class="absolute inset-0 bg-black/90 flex flex-col items-center justify-center border-2 border-dashed border-cyan-400/50 m-2 rounded-lg transition duration-200 opacity-0 pointer-events-none z-20">
+                        <div class="text-2xl mb-1">📁</div>
+                        <div class="text-[11px] font-bold text-cyan-400 tracking-wider">ZIPをここにドロップでロード</div>
+                        <div class="text-[9px] text-gray-500 mt-0.5">ChroMapperなどで出力したzipもOK!</div>
+                    </div>
+
+                    <div class="relative w-32 h-32 rounded-lg overflow-hidden bg-slate-900 border border-white/10 mb-3 group shadow-[0_0_15px_rgba(0,0,0,0.5)] flex-shrink-0">
+                        <img id="coverImage" src="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='100' height='100' viewBox='0 0 100 100'><rect width='100' height='100' fill='%230b0b1a'/><text x='50' y='55' font-size='10' font-family='sans-serif' fill='%23333355' text-anchor='middle'>NO IMAGE</text></svg>"
+                             alt="Cover Art" class="w-full h-full object-cover transition duration-300">
+                        <label for="localFile" class="absolute inset-0 bg-black/70 flex flex-col items-center justify-center opacity-0 group-hover:opacity-100 cursor-pointer transition duration-200">
+                            <span class="text-xl">📂</span>
+                            <span class="text-[9px] mt-1 text-cyan-400 font-bold">ローカルZIPを開く</span>
+                            <input type="file" id="localFile" accept=".zip" class="hidden">
+                        </label>
+                    </div>
+
+                    <div class="w-full space-y-0.5 z-10">
+                        <h2 id="songName" class="text-base font-black tracking-wide truncate">NO SONG LOADED</h2>
+                        <p id="songSubName" class="text-[11px] text-cyan-400 font-bold truncate">-</p>
+                        <p id="songAuthor" class="text-[11px] text-gray-400 truncate">Artist: -</p>
+                        <p id="mapperName" class="text-[11px] text-gray-500 truncate">Mapper: -</p>
+                    </div>
+
+                    <div id="statusContainer" class="w-full mt-3 bg-black/40 border border-cyan-500/10 rounded-lg p-2 text-left hidden">
+                        <div class="flex justify-between items-center text-[9px] mb-0.5 font-mono text-cyan-400">
+                            <span id="statusText">Downloading...</span>
+                            <span id="statusPercent">0%</span>
+                        </div>
+                        <div class="w-full h-1 bg-gray-900 rounded-full overflow-hidden">
+                            <div id="statusBar" class="h-full bg-gradient-to-r from-red-500 to-cyan-400 transition-all duration-100" style="width: 0%;"></div>
+                        </div>
+                    </div>
+
+                    <div id="audioModeTag" class="mt-3 text-[9px] px-2.5 py-0.5 rounded-full font-mono bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 hidden">
+                        🎵 REAL AUDIO SYNCHRONIZED
+                    </div>
+                </div>
+
+                <div class="cyber-panel rounded-xl p-4 flex flex-col gap-3 flex-shrink-0">
+                    <div class="text-[11px] font-bold tracking-widest border-b border-cyan-500/20 pb-1.5 text-cyan-400 flex justify-between items-center">
+                        <span>SELECT DIFFICULTY</span>
+                        <span id="diffSetLabel" class="text-[9px] bg-red-500/10 text-red-400 border border-red-500/30 px-1.5 rounded-full">Standard</span>
+                    </div>
+
+                    <div id="difficultyContainer" class="flex flex-wrap gap-1.5">
+                        <span class="text-[11px] text-gray-600 py-1">マップがロードされていません</span>
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-2 mt-1 font-mono text-[11px]">
+                        <div class="bg-black/30 border border-white/5 p-1.5 rounded-lg">
+                            <div class="text-gray-500 text-[9px]">TOTAL NOTES</div>
+                            <div id="statNotes" class="text-white font-bold text-base">-</div>
+                        </div>
+                        <div class="bg-black/30 border border-white/5 p-1.5 rounded-lg">
+                            <div class="text-red-400 text-[9px]">RED NOTES</div>
+                            <div id="statRed" class="font-bold text-base">-</div>
+                        </div>
+                        <div class="bg-black/30 border border-white/5 p-1.5 rounded-lg">
+                            <div class="text-cyan-400 text-[9px]">BLUE NOTES</div>
+                            <div id="statBlue" class="font-bold text-base">-</div>
+                        </div>
+                        <div class="bg-black/30 border border-white/5 p-1.5 rounded-lg">
+                            <div class="text-yellow-500 text-[9px]">BOMBS</div>
+                            <div id="statBombs" class="font-bold text-base">-</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="cyber-panel rounded-xl p-4 flex flex-col gap-3 flex-shrink-0">
+                    <div class="text-[11px] font-bold tracking-widest border-b border-cyan-500/20 pb-1.5 text-cyan-400">PLAYBACK CONTROL</div>
+
+                    <div class="flex flex-col gap-1">
+                        <div class="flex justify-between text-[9px] text-gray-400">
+                            <span>🔊 VOLUME</span>
+                            <span id="volumePercent" class="font-mono text-cyan-400">40%</span>
+                        </div>
+                        <input type="range" id="volumeBar" min="0" max="100" value="40" oninput="changeVolume()"
+                               class="w-full accent-cyan-400 bg-gray-800 rounded-lg h-1.5 cursor-pointer">
+                    </div>
+
+                    <div class="flex flex-col gap-0.5">
+                        <input type="range" id="seekBar" min="0" max="100" value="0" step="0.1"
+                               class="w-full accent-cyan-400 bg-gray-800 rounded-lg h-1.5 cursor-pointer">
+                        <div class="flex justify-between text-[9px] text-gray-500 font-mono">
+                            <span id="timeCurrent">0:00</span>
+                            <span><span id="timeDuration">0:00</span><span id="chartEndHint" class="text-amber-500/70"></span></span>
+                        </div>
+                    </div>
+
+                    <div class="flex flex-col gap-1 border-t border-cyan-500/10 pt-2">
+                        <div class="flex justify-between text-[9px] text-gray-400">
+                            <span>🚀 SPAWN OFFSET (NJS基準)</span>
+                            <span id="approachValue" class="font-mono text-cyan-400">-</span>
+                        </div>
+                        <input type="range" id="approachBar" min="-2.5" max="2.5" step="0.1" value="0" oninput="changeApproach()"
+                               class="w-full accent-cyan-400 bg-gray-800 rounded-lg h-1.5 cursor-pointer">
+                        <div class="flex justify-between text-[8px] text-gray-600 font-mono leading-none">
+                            <span>-2.5s</span>
+                            <span class="text-cyan-500/70">NJS</span>
+                            <span>+2.5s</span>
+                        </div>
+                        <span class="text-[8px] text-gray-600 leading-none">中央 = 譜面のNJSどおり。左右でスポーン時間を±秒単位で微調整できます。</span>
+                    </div>
+
+                    <div class="flex justify-between items-center gap-2 border-t border-cyan-500/10 pt-2">
+                        <button onclick="resetPlayback()" class="p-1.5 bg-gray-900 border border-white/10 hover:border-cyan-400/50 rounded-lg text-xs transition" title="最初から巻き戻し">
+                            ⏮️
+                        </button>
+
+                        <button id="playBtn" onclick="togglePlay()" class="flex-1 py-1.5 bg-gradient-to-r from-red-600 to-cyan-500 hover:from-red-500 hover:to-cyan-400 text-white font-black text-[11px] rounded-lg tracking-widest transition active:scale-95 disabled:opacity-50" disabled>
+                            PLAY PREVIEW ▶️
+                        </button>
+
+                        <select id="speedSelect" onchange="changeSpeed()" class="bg-gray-900 border border-white/10 hover:border-cyan-400/50 px-1.5 py-1.5 rounded-lg text-[10px] text-white focus:outline-none transition font-mono">
+                            <option value="0.5">0.50x</option>
+                            <option value="0.75">0.75x</option>
+                            <option value="1.0" selected>1.00x</option>
+                            <option value="1.25">1.25x</option>
+                            <option value="1.5">1.50x</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <div class="lg:col-span-8 h-full flex flex-col gap-3 min-h-0">
+                <div id="previewContainer" class="relative w-full flex-1 bg-[#020206] border border-cyan-500/30 rounded-2xl overflow-hidden neon-border min-h-0">
+                    <div id="noMapScreen" class="absolute inset-0 bg-black/90 flex flex-col items-center justify-center p-6 text-center z-10 transition duration-300">
+                        <div class="w-16 h-16 mb-3 rounded-full border border-cyan-500/20 flex items-center justify-center text-2xl animate-pulse">
+                            🎧
+                        </div>
+                        <h3 class="text-base font-black tracking-widest text-cyan-400 mb-1">READY TO PREVIEW</h3>
+                        <p class="text-[11px] text-gray-500 max-w-sm mb-4 leading-relaxed">
+                            BeatSaverのマップURL、!bsrコマンド、または左側のカバーをクリックして譜面パッケージ(.zip)を開いてください！
+                        </p>
+
+                        <div class="flex flex-col gap-1.5 w-full max-w-xs">
+                            <span class="text-[9px] text-gray-600 font-bold uppercase tracking-wider">⚡ POPULAR TEST MAPS</span>
+                            <button onclick="quickLoad('4e6af')" class="py-1.5 px-3 bg-cyan-950/20 hover:bg-cyan-950/40 border border-cyan-500/30 rounded-lg text-[11px] font-mono text-cyan-400 text-left transition flex justify-between items-center">
+                                <span>🎵 4e6af (NEON GENERATOR)</span>
+                                <span class="text-[9px] bg-cyan-500/20 px-1.5 rounded">LOAD</span>
+                            </button>
+                            <button onclick="quickLoad('3e1fe')" class="py-1.5 px-3 bg-red-950/20 hover:bg-red-950/40 border border-red-500/30 rounded-lg text-[11px] font-mono text-red-400 text-left transition flex justify-between items-center">
+                                <span>🎵 3e1fe (Speed Map)</span>
+                                <span class="text-[9px] bg-red-500/20 px-1.5 rounded">LOAD</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="flex flex-col md:flex-row justify-between items-start md:items-center p-3 bg-black/40 border border-white/5 rounded-xl text-[10px] text-gray-500 gap-2 flex-shrink-0">
+                    <div class="flex items-center gap-2">
+                        <span class="text-cyan-400 font-bold">💡 HINT:</span>
+                        <span>オートプレイプレビューです。ノーツ判定サークルに重なる瞬間にスライスエフェクトが発生します！</span>
+                    </div>
+                    <div class="flex items-center gap-2 font-mono text-[9px] md:text-[10px] whitespace-nowrap">
+                        <span>BPM: <b id="bpmLabel" class="text-white">-</b></span>
+                        <span>|</span>
+                        <span>NJS: <b id="njsLabel" class="text-white">-</b></span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="toast" class="fixed bottom-6 right-6 transform translate-y-20 opacity-0 bg-gray-900 border border-cyan-500/50 text-slate-100 text-xs font-bold px-5 py-3.5 rounded-xl z-50 shadow-2xl transition duration-300 pointer-events-none">
+        Notification
+    </div>
+
+    <script type="module" src="/src/main.js"></script>
+</body>
+</html>
